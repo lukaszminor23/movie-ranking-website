@@ -10,6 +10,7 @@ from requests import get
 
 
 API_URL = "https://api.themoviedb.org/3/search/movie"
+MOVIE_INFO = "https://api.themoviedb.org/3/movie/"
 API_KEY = "Your API key"
 
 
@@ -93,6 +94,23 @@ def add():
         movies = response.json()["results"]
         return render_template("select.html", movies=movies)
     return render_template('add.html', form=form)
+
+
+@app.route("/find_movie", methods=['GET', 'POST'])
+def find_movie():
+    movie_id = request.args.get("id")
+    response = get(f"{MOVIE_INFO}{movie_id}", params={"api_key": API_KEY})
+    data = response.json()
+    with app.app_context():
+        new_movie = Movie(
+            title=data["title"],
+            year=data["release_date"].split("-")[0],
+            description=data["overview"],
+            img_url=f"https://image.tmdb.org/t/p/original/{data['poster_path']}"
+        )
+        db.session.add(new_movie)
+        db.session.commit()
+        return redirect(url_for("home"))
 
 
 if __name__ == '__main__':
