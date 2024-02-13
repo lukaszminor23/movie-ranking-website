@@ -39,9 +39,11 @@ class Movie(db.Model):
 with app.app_context():
     db.create_all()
 
-# with app.app_context():
-#     result = db.session.execute(db.select(Movie).order_by(Movie.rating))
-#     all_movies = result.scalars()
+
+class EditForm(FlaskForm):
+    rating = StringField("Your rating out of 10")
+    review = StringField("Your review")
+    submit = SubmitField("Done")
 
 
 @app.route("/")
@@ -49,6 +51,28 @@ def home():
     query = db.session.execute(db.select(Movie).order_by(Movie.rating))
     movies = query.scalars()
     return render_template("index.html", data=movies)
+
+
+@app.route("/edit", methods=['GET', 'POST'])
+def edit():
+    form = EditForm()
+    movie_id = request.args.get("id")
+    movie = db.get_or_404(Movie, movie_id)
+    if form.validate_on_submit():
+        movie.rating = float(form.rating.data)
+        movie.review = form.review.data
+        db.session.commit()
+        return redirect(url_for('home'))
+    return render_template('edit.html', form=form, movie=movie)
+
+
+@app.route('/delete')
+def delete():
+    movie_id = request.args.get("id")
+    movie = db.get_or_404(Movie, movie_id)
+    db.session.delete(movie)
+    db.session.commit()
+    return redirect(url_for('home'))
 
 
 if __name__ == '__main__':
