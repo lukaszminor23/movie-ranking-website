@@ -4,8 +4,8 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy import Integer, String, Float
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, IntegerField, FloatField
-from wtforms.validators import DataRequired, URL
+from wtforms import StringField, SubmitField
+from wtforms.validators import DataRequired
 from requests import get
 
 
@@ -59,7 +59,11 @@ class AddForm(FlaskForm):
 @app.route("/")
 def home():
     query = db.session.execute(db.select(Movie).order_by(Movie.rating))
-    movies = query.scalars()
+    movies = query.scalars().all()
+
+    for i in range(len(movies)):
+        movies[i].ranking = len(movies) - i
+    db.session.commit()
     return render_template("index.html", data=movies)
 
 
@@ -106,6 +110,7 @@ def find_movie():
             title=data["title"],
             year=data["release_date"].split("-")[0],
             description=data["overview"],
+            rating=round(data["vote_average"], 2),
             img_url=f"https://image.tmdb.org/t/p/original/{data['poster_path']}"
         )
         db.session.add(new_movie)
