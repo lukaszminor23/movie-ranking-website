@@ -24,7 +24,7 @@ It's a Flask web application that allows users to view a list of movies, rate an
 4. Run the application:
 
     ```
-    python app.py
+    python main.py
     ```
 5. Access the application by navigating to `http://localhost:5000/` in your web browser.
 ## Acknowledgements
