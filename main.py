@@ -4,9 +4,13 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy import Integer, String, Float
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField
-from wtforms.validators import DataRequired
-import requests
+from wtforms import StringField, SubmitField, IntegerField, FloatField
+from wtforms.validators import DataRequired, URL
+from requests import get
+
+
+API_URL = "https://api.themoviedb.org/3/search/movie"
+API_KEY = "Your API key"
 
 
 app = Flask(__name__)
@@ -46,6 +50,11 @@ class EditForm(FlaskForm):
     submit = SubmitField("Done")
 
 
+class AddForm(FlaskForm):
+    title = StringField("Movie title", validators=[DataRequired()])
+    submit = SubmitField("Search")
+
+
 @app.route("/")
 def home():
     query = db.session.execute(db.select(Movie).order_by(Movie.rating))
@@ -73,6 +82,17 @@ def delete():
     db.session.delete(movie)
     db.session.commit()
     return redirect(url_for('home'))
+
+
+@app.route("/add", methods=['GET', 'POST'])
+def add():
+    form = AddForm()
+    if form.validate_on_submit():
+        movie = form.title.data
+        response = get(url=API_URL, params={"api_key": API_KEY, "query": movie})
+        movies = response.json()["results"]
+        return render_template("select.html", movies=movies)
+    return render_template('add.html', form=form)
 
 
 if __name__ == '__main__':
